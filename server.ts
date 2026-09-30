@@ -1,0 +1,8 @@
+import { env } from 'cloudflare:workers';
+import { getChatGPTUser } from '@/app/chatgpt-auth';
+export function db(){if(!env.DB)throw new Error("Store database unavailable");return env.DB;}
+export async function role(){const user=await getChatGPTUser();if(!user)return null;const transferred=await db().prepare("SELECT value FROM settings WHERE key='ownerEmail'").first<{value:string}>();const owner=(transferred?.value||(env as unknown as Record<string,string>).ADMIN_OWNER_EMAIL||'').trim().toLowerCase();if(owner&&user.email.toLowerCase()===owner)return {email:user.email,role:'owner'};const row=await db().prepare('SELECT role FROM staff WHERE lower(email)=?').bind(user.email.toLowerCase()).first<{role:string}>();return row?{email:user.email,role:row.role}:null}
+export function canWrite(role:string,area:string){return role==='owner'||(role==='manager'&&area!=='staff'&&area!=='settings')||(role==='catalog'&&area==='products')||(role==='fulfillment'&&['orders','products'].includes(area))}
+export async function audit(actor:string,action:string,details:string){await db().prepare('INSERT INTO activity(id,actor,action,details,created_at) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(),actor,action,details,new Date().toISOString()).run()}
+export async function config(key:string,fallback:string){const row=await db().prepare('SELECT value FROM settings WHERE key=?').bind(key).first<{value:string}>();const value=row?.value??fallback;return key==='brand'?value.replace(/\s+atelier\b/gi,'').trim():value}
+export const json=(body:unknown,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store'}});

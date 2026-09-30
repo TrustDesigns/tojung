@@ -1,0 +1,9 @@
+{
+  "project": "Toju",
+  "source_commit": "f8cc24879b53b4587c4a15e06ab6f4907191d181",
+  "live_url": "https://tojung.codecampusabuja.chatgpt.site",
+  "export_type": "source only",
+  "live_database_included": false,
+  "uploaded_media_included": false,
+  "runtime_secrets_included": false
+}

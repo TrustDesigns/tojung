@@ -1,0 +1,8 @@
+import {env} from 'cloudflare:workers';
+import {db} from './server';
+
+const bytesToBase64=(bytes:Uint8Array)=>btoa(String.fromCharCode(...bytes));
+const base64ToBytes=(value:string)=>Uint8Array.from(atob(value),character=>character.charCodeAt(0));
+async function encryptionKey(){const encoded=(env as unknown as Record<string,string>).STORE_ENCRYPTION_KEY;if(!encoded)throw new Error('Payment encryption is unavailable');const raw=base64ToBytes(encoded);if(raw.length!==32)throw new Error('Invalid payment encryption key');return crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},false,['encrypt','decrypt'])}
+export async function getPaystackSecret():Promise<string|null>{const row=await db().prepare("SELECT value FROM settings WHERE key='paystackSecret'").first<{value:string}>();if(row?.value==='disabled')return null;if(row){const saved=JSON.parse(row.value) as {iv:string;data:string};const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:base64ToBytes(saved.iv)},await encryptionKey(),base64ToBytes(saved.data));return new TextDecoder().decode(plain)}return (env as unknown as Record<string,string>).PAYSTACK_SECRET_KEY||null}
+export async function savePaystackSecret(secret:string){if(!/^sk_(test|live)_[A-Za-z0-9]{8,200}$/.test(secret))throw new Error('Enter a valid Paystack secret key beginning sk_test_ or sk_live_');const iv=crypto.getRandomValues(new Uint8Array(12));const cipher=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await encryptionKey(),new TextEncoder().encode(secret)));await db().prepare("INSERT INTO settings(key,value) VALUES('paystackSecret',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(JSON.stringify({iv:bytesToBase64(iv),data:bytesToBase64(cipher)})).run()}

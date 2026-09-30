@@ -1,0 +1,2 @@
+export type StoreSettings = {brand:string;heroTitle:string;heroText:string;promotion:string;heroImage:string;paymentsReady:boolean};
+export const defaultStoreSettings:StoreSettings = {brand:'Tóju',heroTitle:'The art of an entrance.',heroText:'Exotic Nigerian-made shoes and bags, made for the moments you want to remember.',promotion:'Exotic Nigerian-made shoes & bags',heroImage:'/products/look-4.jpg',paymentsReady:false};

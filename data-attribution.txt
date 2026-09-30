@@ -1,0 +1,4 @@
+Nigeria Administrative Divisions Dataset — Open Admin Data
+Source: https://github.com/open-admin-data/nigeria-administrative-divisions
+License: CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
+Adaptation: English state and LGA names only, grouped by state; Federal Capital Territory shortened to FCT.
